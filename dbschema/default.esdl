@@ -3,7 +3,6 @@ module default {
     required username: str {
       constraint exclusive;
     };
-    multi chats: Message;
   }
 
   type Message {

@@ -8,17 +8,25 @@ const db = edgedb.createClient();
 router.get("/user", async (ctx) => {
   const {headers} = ctx.request;
   const name = headers.get("name");
-  const user = await db.querySingleJSON("select User {username, chats } filter .username = $name", {name});
+  const user = await db.querySingleJSON("select User { username } filter .username = <str>$name", {name});
   ctx.response.body = user;
 })
 
-router.post("/msg", async (ctx) => {
-  const {headers} = ctx.response;
+router.get("/msg", async (ctx) => {
+  const {headers} = ctx.request;
   const from = headers.get("from");
-  const to = headers.get("to");
-  const content = headers.get("content");
+  const msg = await db.queryJSON("select Message {from, to, text, time} filter .from = <str>$from", {from});
+  ctx.response.body = msg;
+})
+
+router.post("/msg", async (ctx) => {
+  const headerlist = ctx.request.headers;
+  const from = headerlist.get("from");
+  const to = headerlist.get("to");
+  const content = headerlist.get("content");
   const time = Date.now();
-  await db.querySingle("insert Msg {from := $from, to := $to, text := $content, time := $time}", {from, to, content, time});
+  console.log(from, to, content, time);
+  await db.querySingle("insert Message {from := <str>$from, to := <str>$to, text := <str>$content, time := <int64>$time}", {from, to, content, time});
   ctx.response.body = "ok";
 })
 
