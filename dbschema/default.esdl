@@ -1,6 +1,10 @@
 module default {
   type Account {
-    required username: str {
+    required username: str;
+    required password: str;
+    required description: str;
+    image: str;
+    required accid: str {
       constraint exclusive;
     };
   }
