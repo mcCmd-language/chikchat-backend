@@ -3,7 +3,9 @@ module default {
     required username: str;
     required password: str;
     required description: str;
-    multi manage: Manage;
+    multi link manage: Manage {
+      on target delete allow;
+    };
     image: str;
     required accid: str {
       constraint exclusive;
@@ -19,27 +21,18 @@ module default {
 
   type Manage {
     required name: str;
-    required multi elements: ManageElement;
+    required parent_accid: str;
+    multi link elements: ManageElement {
+      on target delete allow;
+    };
   }
+
+  scalar type ValueForManage extending enum<bool, str, int64>;
 
   type ManageElement {
     required name: str;
+    required parent_name: str;
     required type: str;
-  }
-
-  type ToggleElement extending ManageElement {
-    required value: bool;
-  }
-
-  type InputElement extending ManageElement {
-    required value: str;
-  }
-
-  type TimerElement extending ManageElement {
-    required value: int64;
-  }
-
-  type TriggerElement extending ManageElement {
-    required value: str;
+    required value: ValueForManage;
   }
 }
