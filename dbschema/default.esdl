@@ -18,6 +18,7 @@ module default {
   }
 
   type Manage {
+    required name: str;
     required multi elements: ManageElement;
   }
 
