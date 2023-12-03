@@ -26,9 +26,20 @@ router.get("/ws", (ctx) => {
 
 // 유저 정보 전송
 router.get("/users", async (ctx) => {
-  const users = await db.queryJSON("select Account { username, accid, description, image, manage: {name, elements: {name, type, value}}}");
+  const users = await db.queryJSON("select Account { username, accid, description, image, manage }");
+  console.log(users);
+  console.log("a");
+  const jusers = JSON.parse(users);
+  for (const i of jusers) {
+    if (i.manage.toString() !== "") {
+      console.log(typeof i.manage);
+      console.log(i.manage);
+      i.manage = JSON.parse(i.manage)
+    }
+  }
+  console.log(jusers);
   ctx.response.status = 200;
-  ctx.response.body = users;
+  ctx.response.body = jusers;
 })
 
 // 회원가입 요청
@@ -58,6 +69,9 @@ router.get("/login", async (ctx) => {
   if (user == null) {
     ctx.response.status = 401;
     return;
+  }
+  if (user.manage.toString() != "") {
+    user.manage = JSON.parse(user.manage)
   }
   ctx.response.status = 200;
   ctx.response.body = user;
@@ -113,22 +127,9 @@ router.post("/update_manage", async (ctx) => {
   const accid = headers.get("accid");
   const manage = headers.get("manage");
   if (manage === null) {ctx.response.status = 400; return;}
-  const managev = JSON.parse(manage);
-  console.log(managev);
   // 다 지우고 새로 데이터 연동
-  const manages = JSON.parse(await db.queryJSON("select Manage {name}filter .parent_accid = <str>$accid", {accid}));
-  for (const i of manages) {
-    await db.query("delete ManageElement filter .parent_name = <str>$name", {name: i.name});
-    await db.query("delete Manage filter .parent_accid = <str>$accid and .name = <str>$name", {accid, name: i.name});
-  }
   console.log("a");
-  for (const i of managev) {
-    for (const j of i["elements"]) {
-      await db.querySingle("insert ManageElement {parent_name := <str>$parent_name, name := <str>$name, value := <str>$value, type := <str>$type}", {parent_name: i["name"], name: j["name"], value: j["value"], type: j["type"]});
-    }
-    await db.querySingle("insert Manage {parent_accid := <str>$accid, name := <str>$name, elements := (select ManageElement filter .parent_name = <str>$name)}", {accid, name: i["name"]});
-  }
-  await db.querySingle("update Account filter .accid = <str>$accid set {manage := (select Manage filter .parent_accid = <str>$accid)}", {accid});
+  await db.querySingle("update Account filter .accid = <str>$accid set {manage := <json>$manage}", {accid, manage});
   ctx.response.status = 200;
 })
 
